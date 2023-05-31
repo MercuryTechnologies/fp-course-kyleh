@@ -37,33 +37,23 @@ library
   exposed-modules:    Test.Loader
                       Course
                       Course.Applicative
-                      Course.Compose
                       Course.Core
                       Course.ExactlyOne
                       Course.FileIO
                       Course.Functor
-                      Course.JsonParser
-                      Course.JsonValue
                       Course.List
                       Course.Monad
-                      Course.MoreParser
                       Course.Optional
-                      Course.Parser
-                      Course.Person
                       Course.State
                       Course.StateT
                       Course.Validation
                       Test.ApplicativeTest
-                      Test.ComposeTest
                       Test.Framework
                       Test.Framework.Property
                       Test.Framework.Random
                       Test.FunctorTest
-                      Test.JsonParserTest
                       Test.ListTest
                       Test.MonadTest
-                      Test.MoreParserTest
                       Test.OptionalTest
-                      Test.ParserTest
                       Test.StateTest
                       Test.StateTTest

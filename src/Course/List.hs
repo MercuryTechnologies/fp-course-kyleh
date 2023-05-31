@@ -18,10 +18,10 @@ module Course.List where
 import Control.Applicative qualified as A
 import Control.Monad qualified as M
 import Course.Core
-import Course.Core.Prelude
+import Course.Optional
 import Numeric qualified as N
 import System.Environment qualified as E
-import Prelude (Maybe (..), String)
+import Prelude (String)
 import Prelude qualified as P
 
 type List :: Type -> Type
@@ -351,46 +351,46 @@ flattenAgain = error "todo: Course.List#flattenAgain"
 
 {- | Convert a list of optional values to an optional list of values.
 
- * If the list contains all `Just` values,
- then return `Just` list of values.
+ * If the list contains all `Full` values,
+ then return `Full` list of values.
 
- * If the list contains one or more `Nothing` values,
- then return `Nothing`.
+ * If the list contains one or more `Empty` values,
+ then return `Empty`.
 
- > seqOptional (Just 1 :. Just 10 :. Nil)
- Just [1, 10]
+ > seqOptional (Full 1 :. Full 10 :. Nil)
+ Full [1, 10]
 
  > seqOptional Nil
- Just []
+ Full []
 
- > seqOptional (Just 1 :. Just 10 :. Nothing :. Nil)
- Nothing
+ > seqOptional (Full 1 :. Full 10 :. Empty :. Nil)
+ Empty
 
- > seqOptional (Nothing :. map Just infinity)
- Nothing
+ > seqOptional (Empty :. map Full infinity)
+ Empty
 -}
-seqOptional :: List (Maybe a) -> Maybe (List a)
+seqOptional :: List (Optional a) -> Optional (List a)
 seqOptional =
     error "todo: Course.List#seqOptional"
 
 {- | Find the first element in the list matching the predicate.
 
  > find even (1 :. 3 :. 5 :. Nil)
- Nothing
+ Empty
 
  > find even Nil
- Nothing
+ Empty
 
  > find even (1 :. 2 :. 3 :. 5 :. Nil)
- Just 2
+ Full 2
 
  > find even (1 :. 2 :. 3 :. 4 :. 5 :. Nil)
- Just 2
+ Full 2
 
  > find (const True) infinity
- Just 0
+ Full 0
 -}
-find :: (a -> Bool) -> List a -> Maybe a
+find :: (a -> Bool) -> List a -> Optional a
 find =
     error "todo: Course.List#find"
 
@@ -527,11 +527,11 @@ zipWith f (a :. as) (b :. bs) =
 zipWith _ _ _ =
     Nil
 
-unfoldr :: (a -> Maybe (b, a)) -> a -> List b
+unfoldr :: (a -> Optional (b, a)) -> a -> List b
 unfoldr f a =
     case f a of
-        Just (b, a') -> b :. unfoldr f a'
-        Nothing -> Nil
+        Full (b, a') -> b :. unfoldr f a'
+        Empty -> Nil
 
 lines :: Chars -> List Chars
 lines =
@@ -549,14 +549,14 @@ unwords :: List Chars -> Chars
 unwords =
     listh . P.unwords . hlist . map hlist
 
-listOptional :: (a -> Maybe b) -> List a -> List b
+listOptional :: (a -> Optional b) -> List a -> List b
 listOptional _ Nil =
     Nil
 listOptional f (h :. t) =
     let r = listOptional f t
      in case f h of
-            Nothing -> r
-            Just q -> q :. r
+            Empty -> r
+            Full q -> q :. r
 
 any :: (a -> Bool) -> List a -> Bool
 any p =
@@ -625,33 +625,33 @@ replicate :: (Num n, Ord n) => n -> a -> List a
 replicate n x =
     take n (repeat x)
 
-reads :: P.Read a => Chars -> Maybe (a, Chars)
+reads :: P.Read a => Chars -> Optional (a, Chars)
 reads s =
     case P.reads (hlist s) of
-        [] -> Nothing
-        ((a, q) : _) -> Just (a, listh q)
+        [] -> Empty
+        ((a, q) : _) -> Full (a, listh q)
 
-read :: P.Read a => Chars -> Maybe a
+read :: P.Read a => Chars -> Optional a
 read =
     mapOptional fst . reads
 
-readHexs :: (Eq a, Num a) => Chars -> Maybe (a, Chars)
+readHexs :: (Eq a, Num a) => Chars -> Optional (a, Chars)
 readHexs s =
     case N.readHex (hlist s) of
-        [] -> Nothing
-        ((a, q) : _) -> Just (a, listh q)
+        [] -> Empty
+        ((a, q) : _) -> Full (a, listh q)
 
-readHex :: (Eq a, Num a) => Chars -> Maybe a
+readHex :: (Eq a, Num a) => Chars -> Optional a
 readHex =
     mapOptional fst . readHexs
 
-readFloats :: (RealFrac a) => Chars -> Maybe (a, Chars)
+readFloats :: (RealFrac a) => Chars -> Optional (a, Chars)
 readFloats s =
     case N.readSigned N.readFloat (hlist s) of
-        [] -> Nothing
-        ((a, q) : _) -> Just (a, listh q)
+        [] -> Empty
+        ((a, q) : _) -> Full (a, listh q)
 
-readFloat :: (RealFrac a) => Chars -> Maybe a
+readFloat :: (RealFrac a) => Chars -> Optional a
 readFloat =
     mapOptional fst . readFloats
 
