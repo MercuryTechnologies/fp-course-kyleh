@@ -326,7 +326,7 @@ showAndTell :: forall t a. (HasExactlyOne t a, Show a) => t -> P.String
 showAndTell t0 =
   let
 -- ^^ keyword that allows us to make local definitions. begins a layout block, so indent the next line
-    -- ea :: ExactlyOne a
+    ea :: ExactlyOne a
     -- ^^ type signature. usually optional, but we need this one in order to used `getExactlyOne`
     ea = getExactlyOne t0
    in show ea
