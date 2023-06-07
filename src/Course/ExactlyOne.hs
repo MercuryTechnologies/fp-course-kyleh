@@ -41,7 +41,7 @@ data ExactlyOne a = MakeExactlyOne a deriving Show
 --
 -- What does it say? Explain.
 question_ExactlyOne_1 :: P.String
-question_ExactlyOne_1 = error "todo"
+question_ExactlyOne_1 = "MakeExactlyOne is a data constructor taking a value of type `a` and instantiating a value of `ExactlyOne a`."
 
 -- | Create a value of type @'ExactlyOne' a@ from a value of type @a@.
 --
@@ -133,9 +133,22 @@ bindExactlyOne f (MakeExactlyOne a0) = f a0
 --   b) What is the type of `bindExactlyOne f x`?
 question_ExactlyOne_2 :: (P.String, P.String)
 question_ExactlyOne_2 =
-  ( error "todo"
-  , error "todo"
+  ( "`mapExactlyOne f x` is of type `ExactlyOne (ExactlyOne Int)` since `map` wraps the output of `f` which is already of type `ExactlyOne`."
+  , "`bindExactlyOne f x` is of type `ExactlyOne Int` since it only wraps the argument, not the result of `f`."
   )
+
+-- Scratchpad to verify answer:
+-- f :: P.String -> ExactlyOne Int
+-- f _ = MakeExactlyOne 3
+--
+-- x = MakeExactlyOne "Atrus"
+--
+-- g = mapExactlyOne f x
+-- h = bindExactlyOne f x
+--
+-- > :info g
+--
+-- > :info h
 
 type HasExactlyOne :: Type -> Type -> Constraint
 -- ^^^^^^^^^^^^^^^ kind signature declaration for `HasExactlyOne`, defined below (these are optional)
@@ -209,8 +222,8 @@ instance HasExactlyOne (ExactlyOne a) a where
 --     b) How does your answer to _Part a_ relate to the concept that functions are first-class values in Haskell?
 question_ExactlyOne_3 :: (P.String, P.String)
 question_ExactlyOne_3 =
-  ( error "todo"
-  , error "todo"
+  ( "Because functions are values, `withExactlyOne` and `id` do not need to have any arguments as they were already defined in `id`. This is known as point-free style, which typically omits arguments where possible."
+  , "Because a function is being used as a value for definition/assignment (where any other value could go), functions are called first-class values to indicate they work just like any other value."
   )
 
 instance HasExactlyOne (ExactlyOne a, b) a where
@@ -282,7 +295,12 @@ instance Eq a => Eq (ExactlyOne a) where
 --   c) Literally, what do you see when you ask `:type (==)` at the `ghci` prompt?
 --   d) Explain why there's a different between the signature you see when you ask `:info (==)` and the signature you see when you ask `:type (==)`.
 question_ExactlyOne_4 :: (P.String, P.String, P.String, P.String)
-question_ExactlyOne_4 = error "todo"
+question_ExactlyOne_4 =
+  ( "I see a typeclass defining the concept of equality, along with instances for all types that support this constraint."
+  , "`(==)` is a method defined in the typeclass `Eq a` taking two values of type `a` and returning a `Bool`"
+  , "`(==)` is a function from `a` to `a` to `Bool` in the typeclass of `Eq a`."
+  , "The signature of `Eq` in info is nested under the context of `class Eq a` so it is implicitly constrained, whereas the type info must explicitly include it since it does not nest the type inside of the type class."
+  )
 
 -- | Question ExactlyOne 4.5
 --
@@ -290,7 +308,10 @@ question_ExactlyOne_4 = error "todo"
 --  a) What does the compiler tell you when you try to compile it?
 --  b) How does the compiler come to its conclusion? Is it being reasonable?
 question_ExactlyOne_4_5 :: (P.String, P.String)
-question_ExactlyOne_4_5 = error "todo"
+question_ExactlyOne_4_5 =
+  ( "There is a compile error coming from the use of `==` without knowing whether or not the type `a` supports that method (`a == a`)"
+  , "The compiler comes to this conclusion when resolving the expression `x == y` and searching for a valid method for the expression with `x :: a`, `y :: a`. In searching, it finds none and makes the valid suggestion to constrain the type `a` into `Eq a`. This is reasonable, since failing to do so would allow for undefined behavior for types that don't support this method."
+  )
 
 showAndTell :: forall t a. (HasExactlyOne t a, Show a) => t -> P.String
 --                                             ^^^^^^ `Show a` must be true to use `showAndTell`
@@ -323,7 +344,9 @@ showAndTell t0 =
 --   a) What is the signature of `show`? (Hint, use `:type show` instead of `:info show`.)
 --   b) In our own words, what different kinds of info does `:info Show` give us?
 question_ExactlyOne_5 :: (P.String, P.String)
-question_ExactlyOne_5 = error "todo"
+question_ExactlyOne_5 =
+  ( "`show` is a generic function with constrained type argument `Show a` that takes a value of type `a` and returns a string. I'm guessing this is the function that produces the formatted output for a value."
+  , "The `:info` result contextualizes the definition of `show` within the typeclass `Show a`, which is an alternative way of expressing the same information in `:type`. The one piece of additional information is that `:info` shows what module (`GHC.Show`) `show` is defined in." )
 
 -- | Question ExactlyOne 5.5
 --
@@ -331,7 +354,9 @@ question_ExactlyOne_5 = error "todo"
 --  a) What does the compiler tell you when you try to compile it?
 --  b) Why is the compiler unable to determine the type of `ea`?
 question_ExactlyOne_5_5 :: (P.String, P.String)
-question_ExactlyOne_5_5 = error "todo"
+question_ExactlyOne_5_5 =
+  ( "There are errors resulting from the type of `t0` in `getExactlyOne t0` being ambiguous, resulting in no resolved method for `getExactlyOne`."
+  , "The compiler is unable to determine the type of `ea` because it does not know what the type of `getExactlyOne t0` is (for the same reason as the last answer in 5.5a)." )
 
 -- $noteToTrainee
 -- The rest of the code in this file is only needed for the test suite. Move on to [Course.Validation](../Validation.hs)
