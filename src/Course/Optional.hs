@@ -165,7 +165,7 @@ optional _ fallback Empty = fallback
 --
 -- Why does the fallback in `optional` have type `b` rather than type `a`?
 question_Optional_4 :: String
-question_Optional_4 = ""
+question_Optional_4 = "This keeps the return type consistent whether or not the callback `f` is invoked or the fallback is returned instead."
 
 -- | Question Optional 5
 --
