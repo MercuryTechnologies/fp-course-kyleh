@@ -444,7 +444,7 @@ question_List_9 =
 --     init = undefined
 --     list = undefined
 (++) :: List a -> List a -> List a
-(++) = foldRight (:.)
+(++) xs ys = foldRight (:.) ys xs
 -- (++) xs ys = foldRight step init list
   -- where
   --   step next acc = next :. acc
