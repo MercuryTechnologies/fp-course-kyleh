@@ -541,20 +541,22 @@ find f (x :. xs) = if (f x) then Full x else find f xs
 
 {- | Determine if the length of the given list is greater than 4.
 
- > lengthGT4 (1 :. 3 :. 5 :. Nil)
+-- > lengthGT4 (1 :. 3 :. 5 :. 6 :. Nil)
  False
 
- > lengthGT4 Nil
+-- > lengthGT4 Nil
  False
 
- > lengthGT4 (1 :. 2 :. 3 :. 4 :. 5 :. Nil)
+-- > lengthGT4 (1 :. 2 :. 3 :. 4 :. 5 :. Nil)
  True
 
- > lengthGT4 infinity
+-- > lengthGT4 infinity
  True
 -}
 lengthGT4 :: List a -> Bool
-lengthGT4 = error "derp"
+lengthGT4 Nil = False
+lengthGT4 (_ :. _ :. _ :. _ :. _ :. _) = True
+lengthGT4 (_ :. xs) = lengthGT4 xs
 
 {- | Reverse a list.
 
