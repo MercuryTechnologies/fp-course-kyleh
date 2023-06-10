@@ -61,7 +61,10 @@ contains a1 (Full a2) = a1 == a2
 --     a) What are the data constructors of `Maybe`? What are their types?
 --     b) What instances does `Maybe` derive? In your answer, state the instance context and the instance head.
 question_Optional_1 :: (String, String)
-question_Optional_1 = error "todo"
+question_Optional_1 =
+  ( "The data constructors of maybe are `Just a` or `Nothing` which are both of type `Maybe a`."
+  , "`Maybe` derives both `Eq` and `Ord` with `instance Eq a => Eq (Maybe a)` and `instance Ord a => Ord (Maybe a)`."
+  )
 
 -- | Return the possible value if it exists; otherwise, the first argument.
 --
@@ -73,7 +76,8 @@ question_Optional_1 = error "todo"
 --
 -- The `base` package version is called `fromMaybe`, defined in `Data.Maybe`.
 fullOr :: a -> Optional a -> a
-fullOr = error "todo: Course.Optional#fullOr"
+fullOr _ (Full val) = val
+fullOr unless Empty = unless
 
 -- | Map the given function on the possible value.
 --
@@ -83,7 +87,8 @@ fullOr = error "todo: Course.Optional#fullOr"
 -- >>> mapOptional (+1) (Full 8)
 -- Full 9
 mapOptional :: (a -> b) -> Optional a -> Optional b
-mapOptional = error "todo: Course.Optional#mapOptional"
+mapOptional f (Full x) = Full (f x)
+mapOptional _ Empty = Empty
 
 -- | Question Optional 2
 --
@@ -92,7 +97,10 @@ mapOptional = error "todo: Course.Optional#mapOptional"
 --     a) Is there a pattern that all of their type signatures fall into?
 --     b) Are there similarities in their implementations? Explain.
 question_Optional_2 :: (String, String)
-question_Optional_2 = error "todo"
+question_Optional_2 =
+  ( "Yes, the signature for each map is roughly the same, only differing in the name of the type in the map signature."
+  , "There are also equivalencies in the implementations, up to cardinality of data constructors. By that, I mean that the implementation for type `Foo` is usually `mapFoo f (SubFoo x) = SubFoo (f x)` for each data constructor `SubFoo` in `Foo`. There will be further differences given the needs/arguments for each data constructor (like how `Error s` disregards the function)."
+  )
 
 -- | Bind the given function on the possible value.
 --
@@ -105,7 +113,8 @@ question_Optional_2 = error "todo"
 -- >>> bindOptional (\n -> if even n then Full (n - 1) else Full (n + 1)) (Full 9)
 -- Full 10
 bindOptional :: (a -> Optional b) -> Optional a -> Optional b
-bindOptional = error "todo: Course.Optional#bindOptional"
+bindOptional f (Full x) = f x
+bindOptional _ Empty = Empty
 
 -- | Question Optional 3
 --
@@ -114,7 +123,10 @@ bindOptional = error "todo: Course.Optional#bindOptional"
 --     a) Is there a pattern that all of their type signatures fall into?
 --     b) Are there similarities in their implementations? Explain.
 question_Optional_3 :: (String, String)
-question_Optional_3 = error "todo"
+question_Optional_3 =
+  ( "Much like in `map`, `bind` also follows the same type signature pattern except this time the provided function already wraps the return type."
+  , "This difference means that the implementaiton is the same, but now we can omit wrapping the final value when calling `f` where we previously had to in `map`."
+  )
 
 -- | Try the first optional for a value. If it has a value, use it; otherwise,
 -- use the second value.
@@ -131,7 +143,8 @@ question_Optional_3 = error "todo"
 -- >>> Empty <+> Empty
 -- Empty
 (<+>) :: Optional a -> Optional a -> Optional a
-(<+>) = error "todo: Course.Optional#(<+>)"
+(<+>) optionalLeft@(Full _) _ = optionalLeft
+(<+>) Empty optionalRight = optionalRight
 
 -- | Apply the callback or else use the fallback.
 --
@@ -145,13 +158,14 @@ question_Optional_3 = error "todo"
 optional :: (a -> b) -> b -> Optional a -> b
 --                      ^ fallback
 --          ^^^^^^^^ callback
-optional = error "todo: Course.Optional#optional"
+optional f _ (Full x) = f x
+optional _ fallback Empty = fallback
 
 -- | Question Optional 4
 --
 -- Why does the fallback in `optional` have type `b` rather than type `a`?
 question_Optional_4 :: String
-question_Optional_4 = error "todo"
+question_Optional_4 = "This keeps the return type consistent whether or not the callback `f` is invoked or the fallback is returned instead."
 
 -- | Question Optional 5
 --
@@ -159,7 +173,10 @@ question_Optional_4 = error "todo"
 --     a) How are `maybe` and `optional` similar?
 --     b) How are `maybe` and `optional` different?
 question_Optional_5 :: (String, String)
-question_Optional_5 = error "todo"
+question_Optional_5 =
+  ( "`maybe` and `optional` do the same thing, which is to allow unwrapping of an optional type into either its inner value or a fallback value in the case of an empty container."
+  , "`maybe` has the fallback value as the first argument instead of the second."
+  )
 
 -- $noteToTrainee
 --
