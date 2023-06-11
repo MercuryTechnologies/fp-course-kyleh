@@ -256,20 +256,21 @@ lift1 f x = (lift0 f) <*> x
  >>> sequence (ExactlyOne 7 :. ExactlyOne 8 :. ExactlyOne 9 :. Nil)
  ExactlyOne [7,8,9]
 
- >>> sequence ((1 :. 2 :. 3 :. Nil) :. (1 :. 2 :. Nil) :. Nil)
+-- > sequence ((1 :. 2 :. 3 :. Nil) :. (1 :. 2 :. Nil) :. Nil)
  [[1,1],[1,2],[2,1],[2,2],[3,1],[3,2]]
 
  >>> sequence (Full 7 :. Empty :. Nil)
  Empty
 
- >>> sequence (Full 7 :. Full 8 :. Nil)
+-- > sequence (Full 7 :. Full 8 :. Nil)
  Full [7,8]
 
  >>> sequence ((*10) :. (+2) :. Nil) 6
  [60,8]
 -}
 sequence :: Applicative k => List (k a) -> k (List a)
-sequence = error "todo: Course.Applicative#sequence"
+sequence Nil = pure Nil
+sequence (x :. xs) = pure (:.) <*> x <*> sequence xs
 
 {- | Replicate an effect a given number of times.
 
@@ -291,7 +292,7 @@ sequence = error "todo: Course.Applicative#sequence"
  ["aaa","aab","aac","aba","abb","abc","aca","acb","acc","baa","bab","bac","bba","bbb","bbc","bca","bcb","bcc","caa","cab","cac","cba","cbb","cbc","cca","ccb","ccc"]
 -}
 replicateA :: Applicative k => Int -> k a -> k (List a)
-replicateA = error "todo: Course.Applicative#replicateA"
+replicateA n x = pure (replicate n) <*> x
 
 {- | Filter a list with a predicate that produces an effect.
 
@@ -317,7 +318,13 @@ replicateA = error "todo: Course.Applicative#replicateA"
  'listOptional' from "Course.List" can be used to overcome it.
 -}
 filtering :: Applicative k => (a -> k Bool) -> List a -> k (List a)
-filtering = error "todo: Course.Applicative#filtering"
+filtering _ Nil = Nil
+filtering fp (x :. xs) =
+  let
+    rest = filtering fp xs
+    keep p = if p then (x :. rest) else rest
+  in
+    keep <$> (fp x)
 
 -----------------------
 -- SUPPORT LIBRARIES --
