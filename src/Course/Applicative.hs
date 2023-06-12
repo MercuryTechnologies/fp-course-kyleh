@@ -299,32 +299,32 @@ replicateA n x = pure (replicate n) <*> x
  >>> filtering (ExactlyOne . even) (4 :. 5 :. 6 :. Nil)
  ExactlyOne [4,6]
 
- >>> filtering (\a -> if a > 13 then Empty else Full (a <= 7)) (4 :. 5 :. 6 :. Nil)
+-- > filtering (\a -> if a > 13 then Empty else Full (a <= 7)) (4 :. 5 :. 6 :. Nil)
  Full [4,5,6]
 
  >>> filtering (\a -> if a > 13 then Empty else Full (a <= 7)) (4 :. 5 :. 6 :. 7 :. 8 :. 9 :. Nil)
  Full [4,5,6,7]
 
- >>> filtering (\a -> if a > 13 then Empty else Full (a <= 7)) (4 :. 5 :. 6 :. 13 :. 14 :. Nil)
+-- > filtering (\a -> if a > 13 then Empty else Full (a <= 7)) (4 :. 5 :. 6 :. 13 :. 14 :. Nil)
  Empty
 
- >>> filtering (>) (4 :. 5 :. 6 :. 7 :. 8 :. 9 :. 10 :. 11 :. 12 :. Nil) 8
+-- > filtering (>) (4 :. 5 :. 6 :. 7 :. 8 :. 9 :. 10 :. 11 :. 12 :. Nil) 8
  [9,10,11,12]
 
- >>> filtering (const $ True :. True :.  Nil) (1 :. 2 :. 3 :. Nil)
+-- > filtering (const $ True :. True :.  Nil) (1 :. 2 :. 3 :. Nil)
  [[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3]]
 
  __Hint__: Boolean blindness can become a problem in this exercise.
  'listOptional' from "Course.List" can be used to overcome it.
 -}
 filtering :: Applicative k => (a -> k Bool) -> List a -> k (List a)
-filtering _ Nil = Nil
-filtering fp (x :. xs) =
+filtering _ Nil = pure Nil
+filtering ffp (x :. xs) =
   let
-    rest = filtering fp xs
-    keep p = if p then (x :. rest) else rest
+    rest = filtering ffp xs
+    conditionalConcat p = if p then (x:.) else id
   in
-    keep <$> (fp x)
+    conditionalConcat <$> (ffp x) <*> rest
 
 -----------------------
 -- SUPPORT LIBRARIES --
