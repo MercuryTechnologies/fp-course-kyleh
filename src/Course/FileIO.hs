@@ -90,7 +90,7 @@ printFiles xs =
   let
     outputs = (\(fp, content) -> printFile fp content) <$> xs
   in
-    foldLeft (*>) (pure ()) outputs
+    void . sequence $ outputs
 
 
 -- Given a file name, return (file name and file contents).
