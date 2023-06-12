@@ -93,7 +93,7 @@ instance Monad ((->) t) where
  15
 -}
 (<**>) :: Monad k => k (a -> b) -> k a -> k b
-(<**>) kf ka = (\f -> f <$> ka) =<< kf
+(<**>) kf ka = (<$> ka) =<< kf
 
 infixl 4 <**>
 

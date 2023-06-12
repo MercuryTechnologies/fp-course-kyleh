@@ -227,7 +227,7 @@ lift1 f x = (lift0 f) <*> x
  prop> \x y -> Full x *> Full y == Full y
 -}
 (*>) :: Applicative k => k a -> k b -> k b
-(*>) l r = ((\_ -> id) <$> l) <*> r
+(*>) l r = ((const id) <$> l) <*> r
 
 {- | Apply, discarding the value of the second argument.
  Pronounced, left apply.
@@ -249,7 +249,7 @@ lift1 f x = (lift0 f) <*> x
  prop> \x y -> Full x <* Full y == Full x
 -}
 (<*) :: Applicative k => k b -> k a -> k b
-(<*) l r = ((\x -> (\_ -> x)) <$> l) <*> r
+(<*) l r = (const <$> l) <*> r
 
 {- | Sequences a list of structures to a structure of list.
 
