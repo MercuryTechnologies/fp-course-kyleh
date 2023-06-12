@@ -321,10 +321,9 @@ filtering :: Applicative k => (a -> k Bool) -> List a -> k (List a)
 filtering _ Nil = pure Nil
 filtering ffp (x :. xs) =
   let
-    rest = filtering ffp xs
-    conditionalConcat p = if p then (x:.) else id
+    conditionalConcat y p = if p then (y:.) else id
   in
-    conditionalConcat <$> (ffp x) <*> rest
+    (conditionalConcat x) <$> (ffp x) <*> filtering ffp xs
 
 -----------------------
 -- SUPPORT LIBRARIES --
