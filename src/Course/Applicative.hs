@@ -37,53 +37,54 @@ infixl 4 <*>
 
  prop> \x -> pure x == ExactlyOne x
 
- >>> ExactlyOne (+10) <*> ExactlyOne 8
- ExactlyOne 18
+-- > pure (+10) <*> MakeExactlyOne 8
+ MakeExactlyOne 18
 -}
 instance Applicative ExactlyOne where
     pure :: a -> ExactlyOne a
-    pure = error "todo: Course.Applicative pure#instance ExactlyOne"
+    pure = MakeExactlyOne
 
     (<*>) :: ExactlyOne (a -> b) -> ExactlyOne a -> ExactlyOne b
-    (<*>) = error "todo: Course.Applicative (<*>)#instance ExactlyOne"
+    (<*>) (MakeExactlyOne f) = mapExactlyOne f
 
 {- | Insert into a List.
 
  prop> \x -> pure x == x :. Nil
 
- >>> (+1) :. (*2) :. Nil <*> 1 :. 2 :. 3 :. Nil
+-- > (+1) :. (*2) :. Nil <*> 1 :. 2 :. 3 :. Nil
  [2,3,4,2,4,6]
 -}
 instance Applicative List where
     pure :: a -> List a
-    pure = error "todo: Course.Applicative pure#instance List"
+    pure =  (:. Nil)
 
     (<*>) :: List (a -> b) -> List a -> List b
-    (<*>) = error "todo: Course.Apply (<*>)#instance List"
+    (<*>) fs xs = flatMap (\f -> map f xs) fs
 
 {- | Insert into an Optional.
 
  prop> \x -> pure x == Full x
 
- >>> Full (+8) <*> Full 7
+-- > Full (+8) <*> Full 7
  Full 15
 
- >>> Empty <*> Full 7
+-- > Empty <*> Full 7
  Empty
 
- >>> Full (+8) <*> Empty
+-- > Full (+8) <*> Empty
  Empty
 -}
 instance Applicative Optional where
     pure :: a -> Optional a
-    pure = error "todo: Course.Applicative pure#instance Optional"
+    pure = Full
 
     (<*>) :: Optional (a -> b) -> Optional a -> Optional b
-    (<*>) = error "todo: Course.Apply (<*>)#instance Optional"
+    (<*>) (Empty) _ = Empty
+    (<*>) (Full f) x = mapOptional f x
 
 {- | Insert into a constant function.
 
- >>> ((+) <*> (+10)) 3
+-- > ((+) <*> (+10)) 3
  16
 
  >>> ((+) <*> (+5)) 3
@@ -92,7 +93,7 @@ instance Applicative Optional where
  >>> ((+) <*> (+5)) 1
  7
 
- >>> ((*) <*> (+10)) 3
+-- > ((*) <*> (+10)) 3
  39
 
  >>> ((*) <*> (+2)) 3
@@ -105,10 +106,10 @@ instance Applicative Optional where
 -}
 instance Applicative ((->) t) where
     pure :: a -> ((->) t a)
-    pure = error "todo: Course.Applicative pure#((->) t)"
+    pure x _ = x
 
     (<*>) :: ((->) t (a -> b)) -> ((->) t a) -> ((->) t b)
-    (<*>) = error "todo: Course.Apply (<*>)#instance ((->) t)"
+    (<*>) bi f x = bi x (f x)
 
 {- | Apply a binary function in the environment.
 
@@ -131,7 +132,7 @@ instance Applicative ((->) t) where
  18
 -}
 lift2 :: Applicative k => (a -> b -> c) -> k a -> k b -> k c
-lift2 = error "todo: Course.Applicative#lift2"
+lift2 f x y = pure f <*> x <*> y
 
 {- | Apply a ternary function in the environment.
  /can be written using `lift2` and `(<*>)`./
@@ -154,11 +155,11 @@ lift2 = error "todo: Course.Applicative#lift2"
  >>> lift3 (\a b c -> a + b + c) Empty Empty (Full 9)
  Empty
 
- >>> lift3 (\a b c -> a + b + c) length sum product (listh [4,5,6])
+-- > lift3 (\a b c -> a + b + c) length sum product (listh [4,5,6])
  138
 -}
 lift3 :: Applicative k => (a -> b -> c -> d) -> k a -> k b -> k c -> k d
-lift3 = error "todo: Course.Applicative#lift3"
+lift3 f x y z = (lift2 f x y) <*> z
 
 {- | Apply a quaternary function in the environment.
  /can be written using `lift3` and `(<*>)`./
@@ -185,11 +186,11 @@ lift3 = error "todo: Course.Applicative#lift3"
  148
 -}
 lift4 :: Applicative k => (a -> b -> c -> d -> e) -> k a -> k b -> k c -> k d -> k e
-lift4 = error "todo: Course.Applicative#lift4"
+lift4 f x y z w = (lift3 f x y z) <*> w
 
 -- | Apply a nullary function in the environment.
 lift0 :: Applicative k => a -> k a
-lift0 = error "todo: Course.Applicative#lift0"
+lift0 = pure
 
 {- | Apply a unary function in the environment.
  /can be written using `lift0` and `(<*>)`./
@@ -204,7 +205,7 @@ lift0 = error "todo: Course.Applicative#lift0"
  [2,3,4]
 -}
 lift1 :: Applicative k => (a -> b) -> k a -> k b
-lift1 = error "todo: Course.Applicative#lift1"
+lift1 f x = (lift0 f) <*> x
 
 {- | Apply, discarding the value of the first argument.
  Pronounced, right apply.
@@ -215,10 +216,10 @@ lift1 = error "todo: Course.Applicative#lift1"
  >>> (1 :. 2 :. Nil) *> (4 :. 5 :. 6 :. Nil)
  [4,5,6,4,5,6]
 
- >>> (1 :. 2 :. 3 :. Nil) *> (4 :. 5 :. Nil)
+-- > (1 :. 2 :. 3 :. Nil) *> (4 :. 5 :. Nil)
  [4,5,4,5,4,5]
 
- >>> Full 7 *> Full 8
+-- > Full 7 *> Full 8
  Full 8
 
  prop> \a b c x y z -> (a :. b :. c :. Nil) *> (x :. y :. z :. Nil) == (x :. y :. z :. x :. y :. z :. x :. y :. z :. Nil)
@@ -226,7 +227,7 @@ lift1 = error "todo: Course.Applicative#lift1"
  prop> \x y -> Full x *> Full y == Full y
 -}
 (*>) :: Applicative k => k a -> k b -> k b
-(*>) = error "todo: Course.Applicative#(*>)"
+(*>) l r = const id <$> l <*> r
 
 {- | Apply, discarding the value of the second argument.
  Pronounced, left apply.
@@ -237,7 +238,7 @@ lift1 = error "todo: Course.Applicative#lift1"
  >>> (1 :. 2 :. Nil) <* (4 :. 5 :. 6 :. Nil)
  [1,1,1,2,2,2]
 
- >>> (1 :. 2 :. 3 :. Nil) <* (4 :. 5 :. Nil)
+-- > (1 :. 2 :. 3 :. Nil) <* (4 :. 5 :. Nil)
  [1,1,2,2,3,3]
 
  >>> Full 7 <* Full 8
@@ -248,27 +249,28 @@ lift1 = error "todo: Course.Applicative#lift1"
  prop> \x y -> Full x <* Full y == Full x
 -}
 (<*) :: Applicative k => k b -> k a -> k b
-(<*) = error "todo: Course.Applicative#(<*)"
+(<*) l r = (const <$> l) <*> r
 
 {- | Sequences a list of structures to a structure of list.
 
  >>> sequence (ExactlyOne 7 :. ExactlyOne 8 :. ExactlyOne 9 :. Nil)
  ExactlyOne [7,8,9]
 
- >>> sequence ((1 :. 2 :. 3 :. Nil) :. (1 :. 2 :. Nil) :. Nil)
+-- > sequence ((1 :. 2 :. 3 :. Nil) :. (1 :. 2 :. Nil) :. Nil)
  [[1,1],[1,2],[2,1],[2,2],[3,1],[3,2]]
 
  >>> sequence (Full 7 :. Empty :. Nil)
  Empty
 
- >>> sequence (Full 7 :. Full 8 :. Nil)
+-- > sequence (Full 7 :. Full 8 :. Nil)
  Full [7,8]
 
  >>> sequence ((*10) :. (+2) :. Nil) 6
  [60,8]
 -}
 sequence :: Applicative k => List (k a) -> k (List a)
-sequence = error "todo: Course.Applicative#sequence"
+sequence Nil = pure Nil
+sequence (x :. xs) = pure (:.) <*> x <*> sequence xs
 
 {- | Replicate an effect a given number of times.
 
@@ -290,33 +292,38 @@ sequence = error "todo: Course.Applicative#sequence"
  ["aaa","aab","aac","aba","abb","abc","aca","acb","acc","baa","bab","bac","bba","bbb","bbc","bca","bcb","bcc","caa","cab","cac","cba","cbb","cbc","cca","ccb","ccc"]
 -}
 replicateA :: Applicative k => Int -> k a -> k (List a)
-replicateA = error "todo: Course.Applicative#replicateA"
+replicateA n x = pure (replicate n) <*> x
 
 {- | Filter a list with a predicate that produces an effect.
 
  >>> filtering (ExactlyOne . even) (4 :. 5 :. 6 :. Nil)
  ExactlyOne [4,6]
 
- >>> filtering (\a -> if a > 13 then Empty else Full (a <= 7)) (4 :. 5 :. 6 :. Nil)
+-- > filtering (\a -> if a > 13 then Empty else Full (a <= 7)) (4 :. 5 :. 6 :. Nil)
  Full [4,5,6]
 
  >>> filtering (\a -> if a > 13 then Empty else Full (a <= 7)) (4 :. 5 :. 6 :. 7 :. 8 :. 9 :. Nil)
  Full [4,5,6,7]
 
- >>> filtering (\a -> if a > 13 then Empty else Full (a <= 7)) (4 :. 5 :. 6 :. 13 :. 14 :. Nil)
+-- > filtering (\a -> if a > 13 then Empty else Full (a <= 7)) (4 :. 5 :. 6 :. 13 :. 14 :. Nil)
  Empty
 
- >>> filtering (>) (4 :. 5 :. 6 :. 7 :. 8 :. 9 :. 10 :. 11 :. 12 :. Nil) 8
+-- > filtering (>) (4 :. 5 :. 6 :. 7 :. 8 :. 9 :. 10 :. 11 :. 12 :. Nil) 8
  [9,10,11,12]
 
- >>> filtering (const $ True :. True :.  Nil) (1 :. 2 :. 3 :. Nil)
+-- > filtering (const $ True :. True :.  Nil) (1 :. 2 :. 3 :. Nil)
  [[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3],[1,2,3]]
 
  __Hint__: Boolean blindness can become a problem in this exercise.
  'listOptional' from "Course.List" can be used to overcome it.
 -}
 filtering :: Applicative k => (a -> k Bool) -> List a -> k (List a)
-filtering = error "todo: Course.Applicative#filtering"
+filtering _ Nil = pure Nil
+filtering ffp (x :. xs) =
+  let
+    conditionalConcat y p = if p then (y:.) else id
+  in
+    (conditionalConcat x) <$> (ffp x) <*> filtering ffp xs
 
 -----------------------
 -- SUPPORT LIBRARIES --

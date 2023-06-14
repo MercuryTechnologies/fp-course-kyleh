@@ -90,7 +90,10 @@ infixr 5 :.
 --   (a) Using the notation above, why isn't `(x :. y) :. z :. zs` well-typed?
 --   (b) If we had chosen `infixl` instead of `infixr`, what would have have to write instead of `x :. y :. z :. zs`?
 question_List_1 :: (String, String)
-question_List_1 = error "TODO"
+question_List_1 =
+  ( "This is because `(x :. y)` is trying to concatenate `x` and `y`, but `y` may not be a `List t`, which is neccessary given the definition of the type."
+  , "`(x :. (y :. (z :. zs)))`"
+  )
 
 -- | The instance 'Show (List t)' defines its 'show' function to first convert a @'List' t@ into a @[t]@.
 -- Then, it uses the 'show' function from the instance 'Show [t]' to produce a 'String'.
@@ -125,7 +128,13 @@ instance Show t => Show (List t) where
 --
 --   (e) Are the @[]@ and @[]@ in questions (c) and (d) the same? How are they different?
 question_List_2 :: (String, String, String, String, String)
-question_List_2 = error "TODO"
+question_List_2 =
+  ( "`:` is of type `a -> [a] -> [a]` which is from a generic type, to a list of that type, again resulting in a list of that type."
+  , "I wasn't able to find info on the fixity of `:`, but assuming it has the same fixity as `:.` of 5, that means that `:` will be evaluated before Operators like `(++)`."
+  , "`[]` is of type `[a]` where `a` is a free type parameter."
+  , "The kind of `[]` is `* -> *`"
+  , "They are not the same. In `:type []`, `[]` refers to a value and in `:kind []`, `[]` refers to a type constructor with one type argument."
+  )
 
 -- | The list of integers from zero to infinity.
 infinity :: List Integer
@@ -164,11 +173,45 @@ foldRight f b (h :. t) = f h (foldRight f b t)
 -- > f (f (f z0 x1) x2) x3
 foldLeft :: (b -> a -> b) -> b -> List a -> b
 foldLeft _ b Nil = b
-foldLeft f b (h :. t) = let b' = f b h in b' `seq` foldLeft f b' t
+foldLeft f b (h :. t) =
+  let
+    b' = f b h
+  in
+    b' `seq` foldLeft f b' t
 
 -- | Question List 3
 --
 -- Remember the fixity of @(:.)@.
+--
+-- Notes from our chat:
+--
+-- Example list:
+-- existing = (x1 :. (x2 :. (x3 :. Nil)))
+--
+-- Examples of evaluation order from Daniel:
+-- foldRight (&) z0 (x1 :. x2 :. x3 :. Nil) = x1 & (x2 & (x3 & z0))
+-- foldLeft  (&) z0 (x1 :. x2 :. x3 :. Nil) = ((z0 & x1) & x2) & x3
+--
+-- Kyle working out evaluation of both foldl and foldr:
+-- [x1]
+-- ((Nil & x1) & x2) & x3
+-- ([x1] & x2) & x3
+-- [x2, x1] & x3
+-- [x3, x2, x1]
+--
+-- ((z0 * x1) * x2) * x3
+--
+-- (x :. (y + z))
+--
+-- (1 o (2 o (3 o Nil)))
+--           ^^^^^^^^^
+--      ^^^^^^^^^^^^^^^
+-- ^^^^^|^^^^^^^^^^^^^^^
+-- |    |
+-- 1    2    3 Nil
+--
+-- ((1 f' 2) f' 3)
+-- 3 2 1
 --
 --   (a) If you wanted to end up with `x1 :. x2 :. x3 :. Nil` using `foldRight f z0`,
 --       what would you use for `f` and `z0`?
@@ -177,7 +220,12 @@ foldLeft f b (h :. t) = let b' = f b h in b' `seq` foldLeft f b' t
 --       define a function `f'` so that `foldLeft f' z0` will type check.
 --   (d) What is the result of `foldLeft f' z0 (1 :. 2 :. 3 :. Nil)`? Explain.
 question_List_3 :: (String, String, String, String)
-question_List_3 = error "TODO"
+question_List_3 =
+  ( "Assuming `existing = x1 :. x2 :. x3 :. Nil`, you could get the same back by making an identity transform with `foldRight (:.) Nil`."
+  , "`foldLeft (:.) Nil` doesn't fit the type signature required for `foldLeft`. The cons operator `:.` is handed and expects to have an element of type `a` on the left and a `List a` on the right. The first argument to `foldLeft` needs to instead be of type `b -> a -> b`."
+  , "To make the expression type check correctly, the arguments need to be flipped (at least this is one way to make it work). One example would be `foldLeft (\\u v -> v :. u) Nil`. Alternatively, without a lambda, you could do `foldLeft (flip (:.)) Nil`."
+  , "The result of that expression would be `[3,2,1]` which would be the result of `(f' (f' (f' Nil 3) 2) 1)`"
+  )
 
 -- | Question List 4
 --
@@ -189,7 +237,11 @@ question_List_3 = error "TODO"
 --   (b) What's the implementation of `foldl'`?
 --   (c) What's the difference? (You don't have to _understand_ the difference yet, just spot it.)
 question_List_4 :: (String, String, String)
-question_List_4 = error "TODO"
+question_List_4 =
+  ( "`foldl` is implemented as  `foldr (\\(v::a) (fn::b->b) -> oneShot (\\(z::b) -> fn (k z v))) (id :: b -> b) xs z0`"
+  , "`foldl'` is implemented as `foldr (\\(v::a) (fn::b->b) -> oneShot (\\(z::b) -> z `seq` fn (k z v))) (id :: b -> b) xs z0`"
+  , "`foldl'` uses `seq` in order to inform the compiler that a wrapping thunk should not be created for the intermediate return call, which makes `fn` the last call on the stack of each fold allowing for much better optimization."
+  )
 
 -- $listexercises
 
@@ -201,17 +253,39 @@ question_List_4 = error "TODO"
 -- > headOr 3 Nil
 -- 3
 headOr :: a -> List a -> a
-headOr = error "todo: Course.List#headOr"
+headOr x Nil = x
+headOr _ (x :. _) = x
 
 -- | Question List 5
 --
 --   (a) `headOr` can be implemented using either pattern matching or `foldRight`.
 --       Whichever you used in the exercise, implement it using the other here.
 --   (b) You can also implement `headOr` using `foldLeft`. Implement it here.
+--   Note from meeting: we think that (b) could include a hint/leading question on using something extra for `foldLeft` impl.
 --   (c) Which takes less time to run `headOr (1 :. ... :. 10 :. Nil)`,
 --       implementing using `foldLeft` or `foldRight`? Explain.
+headOr' :: a -> List a -> a
+headOr' fb xs = foldRight (\a _ -> a) fb xs
+-- > headOr' 3 (1 :. 2 :. Nil)
+-- 1
+--
+-- > headOr' 3 Nil
+-- 3
+
+headOr'' :: a -> List a -> a
+headOr'' fb xs = optional id fb (foldLeft (\a b -> a <+> Full b) Empty xs)
+-- > headOr'' 3 (1 :. 2 :. 3 :. 4 :. Nil)
+-- 1
+--
+-- > headOr'' 3 Nil
+-- 3
+
 question_List_5 :: (String, String, String)
-question_List_5 = error "TODO"
+question_List_5 =
+  ( "(example headOr' above)"
+  , "(example headOr'' above)"
+  , "`foldRight` will take much less time since it doesn't care about the value of the rest of the list (it's represented by a hole), and `foldLeft` will need to go through the whole list before returning the final result."
+  )
 
 -- | The product of the elements of a list.
 --
@@ -226,7 +300,7 @@ question_List_5 = error "TODO"
 --
 -- Implement this function using `foldLeft`.
 product :: List Int -> Int
-product = error "todo: Course.List#product"
+product xs = foldLeft (*) 1 xs
 
 -- | Sum the elements of the list.
 --
@@ -238,7 +312,7 @@ product = error "todo: Course.List#product"
 --
 -- Implement this function using `foldLeft`.
 sum :: List Int -> Int
-sum = error "todo: Course.List#sum"
+sum xs = foldLeft (+) 0 xs
 
 -- | Return the length of the list.
 --
@@ -247,7 +321,7 @@ sum = error "todo: Course.List#sum"
 --
 -- Implement this function using `foldLeft`.
 length :: List a -> Int
-length = error "todo: Course.List#length"
+length xs = foldLeft (\acc _ -> acc + 1) 0 xs
 
 -- | Map the given function over a list.
 --
@@ -256,14 +330,18 @@ length = error "todo: Course.List#length"
 --
 -- Implement this function using pattern matching.
 map :: (a -> b) -> List a -> List b
-map = error "todo: Course.List#map"
+map _ Nil = Nil
+map f (x :. xs) = f x :. map f xs
 
 -- | Question List 6
 --
 --   (a) Is it possible for `map` to return a list that is longer than the input list? How/Why?
 --   (b) Is it possible for `map` to return a list that is shorter than the input list? How/Why?
 question_List_6 :: (String, String)
-question_List_6 = error "TODO"
+question_List_6 =
+  ( "Nope, the mapping function can only return one value. If this was `flatMap`, then more elements could be returned."
+  , "Nope, the mapping funciton has to return at least one value."
+  )
 
 -- | Question List 7
 --
@@ -275,7 +353,10 @@ question_List_6 = error "TODO"
 --       "lifting an operation on elements to an operation on lists".
 --       In your own words, what does this mean?
 question_List_7 :: (String, String)
-question_List_7 = error "TODO"
+question_List_7 =
+  ( "`map f` would be of type `List X -> List Y`."
+  , "Lifting takes a simple operation and brings it into the `List` structure without needing to require definition of a new function."
+  )
 
 -- | Question List 8
 --
@@ -291,7 +372,14 @@ question_List_7 = error "TODO"
 --   (e) What is the type of `mapOptional map`? What does it do?
 --   (f) What is the type of `map mapOptional`? What does it do?
 question_List_8 :: (String, String, String, String, String, String)
-question_List_8 = error "TODO"
+question_List_8 =
+  ( "`map . map` is of type `(a -> b) -> List (List a) -> List (List b)` and instead maps `f` onto a list of lists."
+  , "`map map` is of type `List (a -> b) -> List (List a -> List b)` which takes a list of functions and returns a list of lifted functions."
+  , "`map . mapOptional` is of type `(a -> b) -> List (Optional a) -> List (Optional b)` which takes a function, lifts it into the `Optional` type, then lifts it into the `List` type to let you map a function over a list of optional values."
+  , "`mapOptional . map` is of type `(a -> b) -> Optional (List a( -> Optional (List b)` which lifts a function `f` into a mapper over lists which may or may not exist as an optional (`Optional (List a)`)."
+  , "`mapOptional map` is of type `Optional (a -> b) -> Optional (List a -> List b)` which takes an optional function and returns an optional lifted version of that function."
+  , "`map mapOptional` is of type `List (a -> b) -> List (Optional a -> Optional b)` which takes a list of functions and creates a list of functions lifted into `Optional`."
+  )
 
 -- QUICKSAVE
 
@@ -302,14 +390,42 @@ question_List_8 = error "TODO"
 --
 -- Implement this function using pattern matching.
 filter :: (a -> Bool) -> List a -> List a
-filter = error "todo: Course.List#filter"
+filter _ Nil = Nil
+filter f (x :. xs) =
+  let
+    rest = filter f xs
+  in
+    if (f x) then (x :. rest) else rest 
 
 -- | Question List 9
 --
 --   (a) Implement `map` using `foldRight`.
 --   (b) Implement `filter` using `foldRight`.
+--
+-- > map' (3+) (1 :. 2 :. 3 :. Nil)
+-- [4,5,6]
+--
+-- > filter' odd (1 :. 2 :. 3 :. Nil)
+-- [1,3]
+map' :: (a -> b) -> List a -> List b
+map' f xs = foldRight step init list
+  where
+    step = \next acc -> (f next) :. acc
+    init = Nil
+    list = xs
+
+filter' :: (a -> Bool) -> List a -> List a
+filter' f xs = foldRight step init list
+  where
+    step = \next acc -> if (f next) then (next :. acc) else acc
+    init = Nil
+    list = xs
+
 question_List_9 :: (String, String)
-question_List_9 = error "TODO"
+question_List_9 =
+  ( "see `map'`"
+  , "see `filter'`"
+  )
 
 -- | Append two lists to a new list.
 --
@@ -317,8 +433,23 @@ question_List_9 = error "TODO"
 -- [1,2,3,4,5,6]
 --
 -- Implement this function using `foldRight`.
+--
+-- Daniel shared a great technique on how to set myself up for
+-- thinking clearly about folds. Start by creating scaffolding using a `where` block
+-- to stub out the pieces of the fold. This allows for better isolation of concepts
+-- to be filled out, rather than trying to understand everything at once.
+-- (++) xs ys = foldRight step init list
+--   where
+--     step next acc = undefined
+--     init = undefined
+--     list = undefined
 (++) :: List a -> List a -> List a
-(++) = error "todo: Course.List#(++)"
+(++) xs ys = foldRight (:.) ys xs
+-- (++) xs ys = foldRight step init list
+  -- where
+  --   step next acc = next :. acc
+  --   init = ys
+  --   list = xs
 
 infixr 5 ++
 
@@ -327,7 +458,7 @@ infixr 5 ++
 -- > flatten ((1 :. 2 :. 3 :. Nil) :. (4 :. 5 :. 6 :. Nil) :. (7 :. 8 :. 9 :. Nil) :. Nil)
 -- [1,2,3,4,5,6,7,8,9]
 flatten :: List (List a) -> List a
-flatten = error "todo: Course.List#flatten"
+flatten = foldLeft (++) Nil
 
 {- | Map a function then flatten to a list.
 
@@ -341,13 +472,17 @@ flatten = error "todo: Course.List#flatten"
  prop> \x -> flatMap id (x :: List (List Int)) == flatten x
 -}
 flatMap :: (a -> List b) -> List a -> List b
-flatMap =
-    error "todo: Course.List#flatMap"
+flatMap f = foldLeft step Nil
+  where
+    step acc x = acc ++ (f x)
 
 -- | Flatten a list of lists to a list (again).
 -- HOWEVER, this time use the /flatMap/ function that you just wrote.
+--
+-- > flattenAgain ((1 :. 2 :. 3 :. Nil) :. (4 :. 5 :. 6 :. Nil) :. (7 :. 8 :. 9 :. Nil) :. Nil)
+-- [1,2,3,4,5,6,7,8,9]
 flattenAgain :: List (List a) -> List a
-flattenAgain = error "todo: Course.List#flattenAgain"
+flattenAgain = flatMap id
 
 {- | Convert a list of optional values to an optional list of values.
 
@@ -369,9 +504,11 @@ flattenAgain = error "todo: Course.List#flattenAgain"
  > seqOptional (Empty :. map Full infinity)
  Empty
 -}
+-- TODO: This could probably be implemented with fold
 seqOptional :: List (Optional a) -> Optional (List a)
-seqOptional =
-    error "todo: Course.List#seqOptional"
+seqOptional Nil = Full Nil
+seqOptional (Empty :. _) = Empty
+seqOptional (Full x :. right) = mapOptional (x :.) $ seqOptional right
 
 {- | Find the first element in the list matching the predicate.
 
@@ -390,31 +527,39 @@ seqOptional =
  > find (const True) infinity
  Full 0
 -}
+-- TODO: Doesn't work in the infinite case, can we use fold?
+-- find :: (a -> Bool) -> List a -> Optional a
+-- find f xs = foldLeft step init list
+--   where
+--     step = \acc next -> acc <+> if (f next) then Full next else Empty
+--     init = Empty
+--     list = xs
 find :: (a -> Bool) -> List a -> Optional a
-find =
-    error "todo: Course.List#find"
+find _ Nil = Empty
+find f (x :. xs) = if (f x) then Full x else find f xs
 
 {- | Determine if the length of the given list is greater than 4.
 
- > lengthGT4 (1 :. 3 :. 5 :. Nil)
+-- > lengthGT4 (1 :. 3 :. 5 :. 6 :. Nil)
  False
 
- > lengthGT4 Nil
+-- > lengthGT4 Nil
  False
 
- > lengthGT4 (1 :. 2 :. 3 :. 4 :. 5 :. Nil)
+-- > lengthGT4 (1 :. 2 :. 3 :. 4 :. 5 :. Nil)
  True
 
- > lengthGT4 infinity
+-- > lengthGT4 infinity
  True
 -}
 lengthGT4 :: List a -> Bool
-lengthGT4 =
-    error "todo: Course.List#lengthGT4"
+lengthGT4 Nil = False
+lengthGT4 (_ :. _ :. _ :. _ :. _ :. _) = True
+lengthGT4 (_ :. xs) = lengthGT4 xs
 
 {- | Reverse a list.
 
- > reverse Nil
+ > reverse (1 :. 2 :. Nil)
  []
 
  > take 1 (reverse (reverse largeList))
@@ -425,8 +570,7 @@ lengthGT4 =
  prop> \x -> let types = x :: Int in reverse (x :. Nil) == x :. Nil
 -}
 reverse :: List a -> List a
-reverse =
-    error "todo: Course.List#reverse"
+reverse = foldLeft (flip (:.)) Nil
 
 {- | Produce an infinite `List` that seeds with the given value at its head,
  then runs the given function for subsequent elements
@@ -438,8 +582,7 @@ reverse =
  [1,2,4,8]
 -}
 produce :: (a -> a) -> a -> List a
-produce =
-    error "todo: Course.List#produce"
+produce f init = init :. produce f (f init)
 
 ---- End of list exercises
 
@@ -691,3 +834,5 @@ instance A.Applicative List where
 instance P.Monad List where
     (>>=) =
         flip flatMap
+
+-- $> test test_List

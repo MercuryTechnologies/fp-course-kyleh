@@ -25,23 +25,21 @@ infixr 1 =<<
 
 {- | Binds a function on the ExactlyOne monad.
 
- >>> (\x -> ExactlyOne(x+1)) =<< ExactlyOne 2
+-- > (\x -> MakeExactlyOne(x+1)) =<< MakeExactlyOne 2
  ExactlyOne 3
 -}
 instance Monad ExactlyOne where
     (=<<) :: (a -> ExactlyOne b) -> ExactlyOne a -> ExactlyOne b
-    (=<<) =
-        error "todo: Course.Monad (=<<)#instance ExactlyOne"
+    (=<<) f (MakeExactlyOne x) = f x
 
 {- | Binds a function on a List.
 
- >>> (\n -> n :. n :. Nil) =<< (1 :. 2 :. 3 :. Nil)
+-- > (\n -> n :. n :. Nil) =<< (1 :. 2 :. 3 :. Nil)
  [1,1,2,2,3,3]
 -}
 instance Monad List where
     (=<<) :: (a -> List b) -> List a -> List b
-    (=<<) =
-        error "todo: Course.Monad (=<<)#instance List"
+    (=<<) = flatMap
 
 {- | Binds a function on an Optional.
 
@@ -50,18 +48,17 @@ instance Monad List where
 -}
 instance Monad Optional where
     (=<<) :: (a -> Optional b) -> Optional a -> Optional b
-    (=<<) =
-        error "todo: Course.Monad (=<<)#instance Optional"
+    (=<<) _ Empty = Empty
+    (=<<) f (Full x) = f x
 
 {- | Binds a function on the reader ((->) t).
 
- >>> ((*) =<< (+10)) 7
+-- > ((*) =<< (+10)) 7
  119
 -}
 instance Monad ((->) t) where
     (=<<) :: (a -> ((->) t b)) -> ((->) t a) -> ((->) t b)
-    (=<<) =
-        error "todo: Course.Monad (=<<)#instance ((->) t)"
+    (=<<) ff f x = ff (f x) x
 
 {- | Witness that all things with (=<<) and (<$>) also have (<*>).
 
@@ -92,12 +89,11 @@ instance Monad ((->) t) where
  >>> ((*) <**> (+10)) 3
  39
 
- >>> ((*) <**> (+2)) 3
+-- > ((*) <**> (+2)) 3
  15
 -}
 (<**>) :: Monad k => k (a -> b) -> k a -> k b
-(<**>) =
-    error "todo: Course.Monad#(<**>)"
+(<**>) kf ka = (<$> ka) =<< kf
 
 infixl 4 <**>
 
@@ -109,38 +105,35 @@ infixl 4 <**>
  >>> join (Full Empty)
  Empty
 
- >>> join (Full (Full 7))
+-- > join (Full (Full 7))
  Full 7
 
- >>> join (+) 7
+-- > join (+) 7
  14
 -}
 join :: Monad k => k (k a) -> k a
-join =
-    error "todo: Course.Monad#join"
+join = (id =<<)
 
 {- | Implement a flipped version of @(=<<)@, however, use only
  @join@ and @(<$>)@.
  Pronounced, bind flipped.
 
- >>> ((+10) >>= (*)) 7
+-- > ((+10) >>= (*)) 7
  119
 -}
 (>>=) :: Monad k => k a -> (a -> k b) -> k b
-(>>=) =
-    error "todo: Course.Monad#(>>=)"
+(>>=) ka f = join (f <$> ka)
 
 infixl 1 >>=
 
 {- | Implement composition within the @Monad@ environment.
  Pronounced, Kleisli composition.
 
- >>> ((\n -> n :. n :. Nil) <=< (\n -> n+1 :. n+2 :. Nil)) 1
+-- > ((\n -> n :. n :. Nil) <=< (\n -> n+1 :. n+2 :. Nil)) 1
  [2,2,3,3]
 -}
 (<=<) :: Monad k => (b -> k c) -> (a -> k b) -> a -> k c
-(<=<) =
-    error "todo: Course.Monad#(<=<)"
+(<=<) f g x = (\y -> f y) =<< (g x)
 
 infixr 1 <=<
 
