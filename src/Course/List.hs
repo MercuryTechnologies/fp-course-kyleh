@@ -508,10 +508,7 @@ flattenAgain = flatMap id
 seqOptional :: List (Optional a) -> Optional (List a)
 seqOptional Nil = Full Nil
 seqOptional (Empty :. _) = Empty
-seqOptional (Full x :. right) =
-  case seqOptional right of
-    Full rest -> Full (x :. rest)
-    Empty -> Empty
+seqOptional (Full x :. right) = mapOptional (x :.) $ seqOptional right
 
 {- | Find the first element in the list matching the predicate.
 
@@ -838,4 +835,4 @@ instance P.Monad List where
     (>>=) =
         flip flatMap
 
--- > test test_List
+-- $> test test_List
