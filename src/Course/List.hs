@@ -375,7 +375,7 @@ question_List_8 :: (String, String, String, String, String, String)
 question_List_8 =
   ( "`map . map` is of type `(a -> b) -> List (List a) -> List (List b)` and instead maps `f` onto a list of lists."
   , "`map map` is of type `List (a -> b) -> List (List a -> List b)` which takes a list of functions and returns a list of lifted functions."
-  , "`map . mapOptional` is of type `(a -> b) -> List Optional a -> List Optional b` which takes a function, lifts it into the `Optional` type, then lifts it into the `List` type to let you map a function over a list of optional values."
+  , "`map . mapOptional` is of type `(a -> b) -> List (Optional a) -> List (Optional b)` which takes a function, lifts it into the `Optional` type, then lifts it into the `List` type to let you map a function over a list of optional values."
   , "`mapOptional . map` is of type `(a -> b) -> Optional List a -> Optional List b` which lifts a function `f` into a mapper over lists which may or may not exist as an optional (`Optional List a`)."
   , "`mapOptional map` is of type `Optional (a -> b) -> Optional (List a -> List b)` which takes an optional function and returns an optional lifted version of that function."
   , "`map mapOptional` is of type `List (a -> b) -> List (Optional a -> Optional b)` which takes a list of functions and creates a list of functions lifted into `Optional`."
