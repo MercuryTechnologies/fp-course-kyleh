@@ -227,7 +227,7 @@ lift1 f x = (lift0 f) <*> x
  prop> \x y -> Full x *> Full y == Full y
 -}
 (*>) :: Applicative k => k a -> k b -> k b
-(*>) l r = ((const id) <$> l) <*> r
+(*>) l r = const id <$> l <*> r
 
 {- | Apply, discarding the value of the second argument.
  Pronounced, left apply.
