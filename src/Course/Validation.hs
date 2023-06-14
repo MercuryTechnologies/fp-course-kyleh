@@ -132,7 +132,11 @@ isError (Value _) = False
 --   b) Are `Error` and `Value` types? Are they type constructors?
 --   c) What are some of the differences between a type constructor and a data constructor?
 question_Validation_1 :: (String, String, String)
-question_Validation_1 = error "todo"
+question_Validation_1 =
+  ( "We need to also define `isError` for `Value a` because the function signature (all the info we have up to that point) is not sufficient to give the compiler the info it needs to allow `isError` to work for all possible argument types (namely just `Value a`). It may seem intuitive that returning `True` for one case is sufficient, but `False` is not the default (rather, there is no default). We need to explicitly define the return for a Value."
+  , "`Error` and `Value` are data constructors, which are functions taking values and returning `Validation a` types where `a` is the value type."
+  , "A type constructor operates at the type level, which is a different system than the value level syntax that relates to runtime logic. It is a function, in a way, but it returns a type instead of a value. Data constructors, on the other hand, construct values of a data type. They are also functions, but they operate at the value level."
+  )
 
 -- | Question Validation 1.1
 --
@@ -143,7 +147,7 @@ question_Validation_1_1 =
     "// Haskell supports multi-line strings, but it's ugly :-(\n\
     \\n\
     \function isError<A>(v: Validation<A>): boolean {\n\
-    \  error \"todo\"\n\
+    \  return v.match(() => true, () => false);\n\
     \}\n\
     \"
 
@@ -175,7 +179,10 @@ isValue = not . isError
 --     a) What's the implementation of `(.)`? What is it doing?
 --     b) How is the order of `(.)` arguments related to (or influenced by, maybe) its implementation?
 question_Validation_2 :: (String, String)
-question_Validation_2 = error "todo"
+question_Validation_2 =
+  ( "`(.)` is implemented as `(.) f g = \\x -> f (g x)` which is applying `f` after `g` (mentally I say \"after\" when thinking of `(.)`)"
+  , "Because the implementation is `f (g x)` and not `g (f x)` the application order is second, then first."
+  )
 
 errorMessage :: Validation a -> String
 --                              ^^^^^^ result type
@@ -218,7 +225,11 @@ valueString v = case v of
 --   b) Why is this error reasonable? Explain.
 --   c) Did the error surprise you? Why or why not?
 question_Validation_2_1 :: (String, String, String)
-question_Validation_2_1 = error "todo"
+question_Validation_2_1 =
+  ( "GHC does not accept the program. I get a 'No instance' error because `Bar` is not derived from the `Show` typeclass"
+  , "The signature of `valueString` is such that the type argument to the `Validation a` type constructor must be constrained by `Show a`. Otherwise, we won't be able to `show x` in the `Value x` match case."
+  , "The error probably would have surprised me without the leading questions, but in this context it makes sense. I'll keep my eye out for this in the wild as I continue my Haskell journey."
+  )
 
 -- | Maps a function on a validation's value side.
 --
@@ -246,6 +257,13 @@ mapValidation _ (Error s) = Error s
 --
 -- Haskell has a feature called `@-patterns` that allows us to pattern match an argument while still giving it a name.
 --
+-- Kyle's aside:
+-- OH MY GOODNESS, AMAZING! ^^^ (I've wanted this for a long time)
+-- For instance, in JS, you can choose between the following:
+--   const f = ({ x, y }) => ({ sum: x + y, arg: { x, y }); // or...
+--   const f = (arg) => ({ sum: arg.x + arg.y, arg });
+-- But this lets you do both. I love it.
+--
 -- > fooFunc :: Validation a -> Foo
 -- > fooFunc errVal@(Error _) = errVal
 -- >                            ^^^^^^ function body for `Error` case with `errVal :: Validation a` in scope
@@ -262,7 +280,11 @@ mapValidation _ (Error s) = Error s
 --   b) Where you surprised by the error? Explain.
 --   c) Why is this error reasonable after all? Explain.
 question_Validation_3 :: (String, String, String)
-question_Validation_3 = error "todo"
+question_Validation_3 =
+  ( "When I use an @-pattern to give the match expression a name, I get a compile error because the return value is technically a different type (or at least it could be). `errVal@(Error s)` is of type `Validation a`, but the return type needs to be of type `Validation b`."
+  , "I was not expecting this error, partly expecting this to act more like a macro rather than variable assignment."
+  , "This error is reasonable given that `errVal` is a variable assignment, and the assignment must convey the same type (lest reflexivity be broken, and subsequently assumptions about equality)."
+  )
 
 -- | Binds a function on a validation's value side to a new validation.
 --
@@ -277,6 +299,7 @@ question_Validation_3 = error "todo"
 bindValidation :: (a -> Validation b) -> Validation a -> Validation b
 --                ^^^^^^^^^^^^^^^^^^^ first argument, a callback that can accept an `a` and yields a `Validation b`.
 bindValidation _ (Error s) = Error s
+-- Note: ^ this is interesting to me because it shows how "falling through" is encoded by skipping the invocation of `f` with a hole
 bindValidation f (Value x) = f x
 --                           ^^^ apply `f` to the data carried by the `Value` constructor.
 
@@ -286,7 +309,7 @@ bindValidation f (Value x) = f x
 -- so that the result will have type `Value b`.
 -- Why doesn't `bindValidation` use the `Value` data constructor to wrap the result of `f x`?
 question_Validation_4 :: String
-question_Validation_4 = error "todo"
+question_Validation_4 = "`f x ` is already of type `Validation b`, so no additional work is needed."
 
 -- | Returns a validation's value side or the given fallback value if the validation is an error.
 --
@@ -298,6 +321,9 @@ question_Validation_4 = error "todo"
 valueOr :: Validation a -> a -> a
 --                         ^ a fallback value of type `a`
 --         ^^^^^^^^^^^^ potentially some data of type `a`, but potentially not.
+--
+-- Feedback note: ↑`a` and ↓`a` are shadowed here, one as a type and one as a value. It was a bit harder to read.
+--
 valueOr (Error _) a = a
 --                    ^ return the fallback value
 --             ^ ignore the error message
@@ -332,7 +358,10 @@ valueValidation = Value
 --   a) What did the compiler say?
 --   b) Was the type what you expected? Why or why not?
 question_Validation_5 :: (String, String)
-question_Validation_5 = error "todo"
+question_Validation_5 =
+  ( "The `Error` data constructor is of type `Err -> Validation a`, which is a function from the `Err` type (in this case a string) to the `Validation a` type where `a` is an unbound type parameter."
+  , "This was the type I expected. If I were to instead check the type of `(Error \"test\" :: Validation Int)`, then the type parameter would be bound."
+  )
 
 -- $noteToTrainee
 -- We're done here! Move on to `[Course.Optional](../Optional.hs)`, and get ready to get your hands dirty.
