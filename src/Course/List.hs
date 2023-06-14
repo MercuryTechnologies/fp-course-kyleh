@@ -472,7 +472,9 @@ flatten = foldLeft (++) Nil
  prop> \x -> flatMap id (x :: List (List Int)) == flatten x
 -}
 flatMap :: (a -> List b) -> List a -> List b
-flatMap f xs = flatten (map f xs)
+flatMap f = foldLeft step Nil
+  where
+    step acc x = acc ++ (f x)
 
 -- | Flatten a list of lists to a list (again).
 -- HOWEVER, this time use the /flatMap/ function that you just wrote.
@@ -835,3 +837,5 @@ instance A.Applicative List where
 instance P.Monad List where
     (>>=) =
         flip flatMap
+
+-- > test test_List
