@@ -67,11 +67,11 @@ put x = State $ const ((), x)
 -}
 instance Functor (State s) where
     (<$>) :: (a -> b) -> State s a -> State s b
-    (<$>) f (State lhs) = State next
+    (<$>) f (State rhs) = State next
         where
             next s = (f a, s')
                 where
-                    (a, s') = lhs s
+                    (a, s') = rhs s
 
 {- | Implement the `Applicative` instance for `State s`.
 
@@ -89,15 +89,16 @@ instance Applicative (State s) where
     pure x =
         State (\s -> (x, s))
     (<*>) :: State s (a -> b) -> State s a -> State s b
-    (<*>) (State context) (State lhs) = State next
+    (<*>) (State context) (State rhs) = State next
         where
             next s = (f a, s'')
                 where
                     -- Question: does the order matter here? Should the context state happen first,
-                    -- or should the lhs state?
+                    -- or should the rhs state?
                     --
                     -- Is it the case that since these are pure functions, this doesn't matter?
-                    (a, s') = lhs s
+                    -- TODO: Swap these
+                    (a, s') = rhs s
                     (f, s'') = context s'
 
 {- | Implement the `Monad` instance for `State s`.
@@ -116,11 +117,11 @@ instance Monad (State s) where
     -- After implementing this, I saw a more terse example using runState.
     -- TODO, maybe if I have time: come back to this and compose runState instead
     -- of implementing from scratch (although this was fun to figure out).
-    (=<<) f (State lhs) = State next
+    (=<<) f (State rhs) = State next
         where
             next s = generated s'
                 where
-                    (a, s') = lhs s
+                    (a, s') = rhs s
                     (State generated) = f a
 
 {- | Find the first element in a `List` that satisfies a given predicate.
@@ -222,4 +223,4 @@ isHappy x = contains 1 $ firstRepeat squares
                 list = digits y
         squares = produce square x
 
--- $> test test_State
+-- > test test_State
