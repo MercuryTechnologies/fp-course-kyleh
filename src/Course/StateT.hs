@@ -207,7 +207,7 @@ distinctF xs = evalT (filtering mp xs) S.empty
 
 -- | An `OptionalT` is a functor of an `Optional` value.
 data OptionalT k a = OptionalT {runOptionalT :: k (Optional a)}
--- 
+--
 
 {- | Implement the `Functor` instance for `OptionalT k` given a Functor k.
 
@@ -341,20 +341,53 @@ distinctG xs = runOptionalT $ evalT (filtering mp xs) S.empty
     where
         mp :: a -> StateT (S.Set a) (OptionalT (Logger Chars)) Bool
         mp x = do
-            seen <- getT
+            seen <- getT'
             if x > 100
               then do
-                StateT $ \s -> OptionalT $ log1 ("aborting > 100: " ++ (show' x)) (Full ((), s))
-                StateT $ const $ OptionalT $ Logger (listh []) Empty
+                -- StateT $ \s -> OptionalT $ log1 ("aborting > 100: " ++ (show' x)) (Full ((), s))
+                log1' ("aborting > 100: " ++ (show' x)) ()
+                -- StateT $ const $ OptionalT $ Logger (listh []) Empty
+                bail
               else do
                 if even x
-                  then StateT $ \s -> OptionalT $ log1 ("even number: " ++ (show' x)) (Full ((), s))
+                  then
+                    -- StateT $ \s -> OptionalT $ log1 ("even number: " ++ (show' x)) (Full ((), s))
+                    log1' ("even number: " ++ (show' x)) ()
                   else pure ()
                 if S.member x seen
                   then pure False
                   else do
-                      putT $ S.insert x seen
+                      putT' $ S.insert x seen
                       pure True
+
+class Monad m => MonadState s m where
+  getT' :: m s
+  putT' :: s -> m ()
+
+instance Monad m => MonadState s (StateT s m) where
+  getT' = getT
+  putT' = putT
+
+class Monad m => MonadBail m where
+  bail :: m a
+
+instance Monad m => MonadBail (OptionalT m) where
+  bail = OptionalT $ pure Empty
+
+instance MonadBail m => MonadBail (StateT s m) where
+  bail = StateT $ \_ -> bail
+
+class Monad m => MonadLog l m where
+  log1' :: l -> a -> m a
+
+instance MonadLog l (Logger l) where
+  log1' = log1
+
+instance MonadLog l m => MonadLog l (StateT s m) where
+  log1' l a = StateT $ \s -> log1' l (a, s)
+
+instance MonadLog l m => MonadLog l (OptionalT m) where
+  log1' l a = OptionalT $ log1' l $ Full a
 
 onFull :: Applicative k => (t -> k (Optional a)) -> Optional t -> k (Optional a)
 onFull g o =
@@ -364,4 +397,4 @@ onFull g o =
         Full a ->
             g a
 
--- $> test test_StateT
+-- > test test_StateT

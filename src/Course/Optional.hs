@@ -196,4 +196,4 @@ instance P.Monad Optional where
 
 -- That last line is what causes `ghcid` to run the tests, in case you were curious.
 
--- $> test test_Optional
+-- > test test_Optional

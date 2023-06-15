@@ -395,7 +395,7 @@ filter f (x :. xs) =
   let
     rest = filter f xs
   in
-    if (f x) then (x :. rest) else rest 
+    if (f x) then (x :. rest) else rest
 
 -- | Question List 9
 --
@@ -835,4 +835,4 @@ instance P.Monad List where
     (>>=) =
         flip flatMap
 
--- $> test test_List
+-- > test test_List
