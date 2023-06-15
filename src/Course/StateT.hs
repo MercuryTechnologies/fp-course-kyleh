@@ -363,5 +363,3 @@ onFull g o =
             pure Empty
         Full a ->
             g a
-
--- $> test test_StateT
